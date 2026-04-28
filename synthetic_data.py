@@ -14,6 +14,7 @@ RNG = np.random.default_rng(seed=2026)
 # Configuración visual (IEEE-compatible, sin colores vivos)
 plt.rcParams.update({
     'font.family': 'serif',
+    'font.serif': ['Times New Roman'],
     'font.size': 9,
     'axes.titlesize': 9,
     'axes.labelsize': 8,
