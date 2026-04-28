@@ -22,7 +22,13 @@ LSG-IC2-Synthetic_data/
 
 ## Generación de datos sintéticos para validación preliminar
 
+### Instalación de librerías
+```bash
+pip install numpy pandas matplotlib scipy
+```
+
 ### Para generar datos sintéticos
 ```bash
 python synthetic_data.py
 ```
+

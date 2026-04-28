@@ -93,17 +93,54 @@ def normalizar_indicadores(df):
 N = 50
 
 raw = pd.DataFrame({
-    # Condición física
+    # Condición física:
+
+    # Justificación: Los conteos de pasos son siempre positivos y tienen cola derecha larga
+    # (la mayoría camina entre 5.000-10.000 pasos, pero algunos pueden llegar a 15.000+). El
+    # log-normal captura exactamente esa asimetría.
     'pasos_dia':         np.clip(RNG.lognormal(mean=np.log(7500), sigma=0.45, size=N), 500, 15000),
+
+    # Justificación: La actividad física moderada-vigorosa (MVPA) también es positiva y asimétrica.
+    # La gamma con shape=2.5 produce una cola más larga que la normal, realista para la población
+    # que mezcla sedentarios y activos. Media teórica: alpha * beta = 2.5 * 55 = 137.5 min/sem.
     'mvpa_min_sem':      np.clip(RNG.gamma(shape=2.5, scale=55, size=N), 0, 420),
-    # Salud física general
+    
+    # --------
+
+    # Salud física general:
+
+    # Justificación: La FC en reposo en adultos jóvenes sanos sigue una distribución aprox. simétrica.
+    # Rango típico entre 55-85 lpm, con media en 68 aprox. Determinamos un rango entre [40, 110] para
+    # evitar valores fisiológicamente imposibles.
     'fc_reposo':         np.clip(RNG.normal(loc=68, scale=9, size=N), 40, 110),
+
+    # Justificación: La calidad de sueño percibida es ordinal, no continua. Las probabilidades reflejan
+    # que en la población universitaria-joven hay un porcentaje significativo con sueño regular (categoria 1).
     'calidad_sueno':     RNG.choice([0, 1, 2], size=N, p=[0.30, 0.40, 0.30]),
-    # Memoria y aprendizaje
+
+    # --------
+
+    # Memoria y aprendizaje:
+
+    # Justificación: En adultos jóvenes, el rendimiento en pruebas cognitivas tiende a ser alto y con
+    # techo (sesgo hacia valores altos). La beta(6,2) tiene media teórica 6/(6+2)=0.75, representando
+    # un buen nivel de rendimiento con variabilidad moderada.
     'prec_memoria_pct':  np.clip(RNG.beta(a=6, b=2, size=N) * 100, 0, 100),
+
+    # Justificación: Los tiempos de respuesta en pruebas de memoria siguen distribuciones aprox. normales
+    # en el centro del rango. El rango elimina tiempos imposiblemente rápidos o lentos.
     'vel_recall_ms':     np.clip(RNG.normal(loc=850, scale=200, size=N), 200, 1800),
-    # Toma de decisiones
+
+    # --------
+
+    # Toma de decisiones:
+
     'prec_decision_pct': np.clip(RNG.beta(a=5, b=2, size=N) * 100, 0, 100),
+
+    # Justificación: Los tiempos de reacción tienen una cola derecha característica (reacciones lentas
+    # ocasionales), que la normal no captura bien. La suma de una gaussiana con una exponencial, llamada
+    # distribución ex-gaussiana, es el modelo estándar en psicología cognitiva para tiempos de reacción.
+    # El componente exponencial (scale=90), modela esos "outliers lentos" realistas.
     'tiempo_reaccion_ms':np.clip(RNG.normal(loc=450, scale=85, size=N) +
                                  RNG.exponential(scale=90, size=N), 150, 1000),
     # Tiempo de juego (para I_AR)
