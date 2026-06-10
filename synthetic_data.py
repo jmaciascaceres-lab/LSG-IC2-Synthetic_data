@@ -153,8 +153,8 @@ df = normalizar_indicadores(raw)
 # 3. ARQUETIPOS (5 perfiles representativos)
 
 arquetipos_raw = pd.DataFrame({
-    'arquetipo':          ['Equilibrado', 'Físico↑ Mental↓', 'Físico↓ Mental↑',
-                           'Bajo general', 'Óptimo'],
+    'arquetipo':          ['Balanced', 'Physical↑ Mental↓', 'Physical↓ Mental↑',
+                           'Low general', 'Optimal'],
     'pasos_dia':          [8200,  11500,  2800,  2200, 11000],
     'mvpa_min_sem':       [185,   310,    40,    25,   300],
     'fc_reposo':          [65,    58,     75,    85,   55],
@@ -202,7 +202,7 @@ print(df[desc_cols].describe().round(3))
 
 # Fig 2: Distribución de índices en N=50
 fig, axes = plt.subplots(1, 3, figsize=(6.5, 2.4))
-labels = ['$IC_{fís}$', '$IC_{ment}$', '$IC_{LSG}$']
+labels = ['$IC_{physical}$', '$IC_{mental}$', '$IC_{LSG}$']
 cols   = ['IC_fis', 'IC_ment', 'IC_LSG']
 colors = [C1, C3, C2]
 
@@ -214,12 +214,12 @@ for ax, col, lbl, col_c in zip(axes, cols, labels, colors):
     ax.axvline(data.median(), color=GRAY, linestyle=':', linewidth=1.0,
                label=f'$\\tilde{{x}}={data.median():.2f}$')
     ax.set_xlabel(lbl)
-    ax.set_ylabel('Frecuencia' if col == 'IC_fis' else '')
+    ax.set_ylabel('Frequency' if col == 'IC_fis' else '')
     ax.set_xlim(0, 1)
     ax.legend(frameon=False, fontsize=6.5)
     ax.set_title(lbl, pad=3)
 
-fig.suptitle(f'Distribución de índices IC₂_LSG ($N={N}$ perfiles sintéticos)',
+fig.suptitle(f'Distribution of IC₂_LSG indices ($N={N}$ synthetic profiles)',
              fontsize=9, y=1.02)
 fig.tight_layout()
 fig.savefig('figures/fig_distribucion.pdf',
@@ -238,18 +238,18 @@ aritm = (IC_fis_vals + IC_ment_fixed) / 2
 
 fig, ax = plt.subplots(figsize=(3.2, 2.6))
 ax.plot(IC_fis_vals, geom,  color=C2, linewidth=1.8,
-        label='Media geométrica $IC_{LSG}$')
+        label='Geometric mean $IC_{LSG}$')
 ax.plot(IC_fis_vals, aritm, color=GRAY, linewidth=1.4,
-        linestyle='--', label='Media aritmética')
+        linestyle='--', label='Arithmetic mean')
 ax.axhline(IC_ment_fixed, color=C4, linewidth=0.9, linestyle=':',
-           label=f'$IC_{{ment}}={IC_ment_fixed}$ (fijo)')
+           label=f'$IC_{{ment}}={IC_ment_fixed}$ (fixed)')
 ax.fill_between(IC_fis_vals, geom, aritm, alpha=0.12, color=C2,
-                label='Penalización por desequilibrio')
-ax.set_xlabel('$IC_{fís}$')
-ax.set_ylabel('Índice global')
+                label='Imbalance penalty')
+ax.set_xlabel('$IC_{physical}$', fontsize=11)
+ax.set_ylabel('Global index', fontsize=11)
 ax.set_xlim(0, 1); ax.set_ylim(0, 0.75)
 ax.legend(frameon=False, fontsize=6.5, loc='upper left')
-ax.set_title('Penalización por desequilibrio\n($IC_{ment}=0.20$ fijo)', fontsize=8.5)
+ax.set_title('Penalty for imbalance', fontsize=8.5)
 fig.tight_layout()
 fig.savefig('figures/fig_geom_vs_aritm.pdf',
             bbox_inches='tight', dpi=300)
@@ -275,10 +275,10 @@ ranges = {
     'tiempo_reaccion_ms':np.linspace(150,  1000,  100),
 }
 labels_sens = {
-    'pasos_dia':          'Pasos/día',
-    'mvpa_min_sem':       'MVPA (min/sem)',
-    'prec_memoria_pct':   'Precisión memoria (%)',
-    'tiempo_reaccion_ms': 'Tiempo reacción (ms)',
+    'pasos_dia':          'Steps/day',
+    'mvpa_min_sem':       'MVPA (min/week)',
+    'prec_memoria_pct':   'Memory performance (%)',
+    'tiempo_reaccion_ms': 'Reaction time (ms)',
 }
 colors_sens = [C1, C3, C4, C2]
 
@@ -297,16 +297,16 @@ for ax, (var, rng), col_c in zip(axes, ranges.items(), colors_sens):
     # Normalizar rango al eje x para comparabilidad
     ax.plot(rng, ic_lsg_vals, color=col_c, linewidth=1.6)
     ax.axvline(baseline[var], color='black', linewidth=0.8,
-               linestyle='--', alpha=0.6, label='Línea base')
+               linestyle='--', alpha=0.6, label='Baseline')
     ax.axhline(normalizar_indicadores(pd.DataFrame([baseline]))['IC_LSG'].values[0],
                color=GRAY, linewidth=0.7, linestyle=':', alpha=0.7)
     ax.set_xlabel(labels_sens[var], fontsize=7.5)
     ax.set_ylabel('$IC_{LSG}$' if var in ['pasos_dia','prec_memoria_pct'] else '')
     ax.set_ylim(0, 1)
     ax.legend(frameon=False, fontsize=6)
-    ax.set_title(f'Variación: {labels_sens[var]}', fontsize=8)
+    ax.set_title(f'Variation of: {labels_sens[var]}', fontsize=8)
 
-fig.suptitle('Análisis de sensibilidad de $IC_{LSG}$ (un indicador variable, resto fijo)',
+fig.suptitle('Sensitivity analysis of $IC_{LSG}$ (one variable indicator, fixed remainder)',
              fontsize=9, y=1.01)
 fig.tight_layout()
 fig.savefig('figures/fig_sensibilidad.pdf',
@@ -321,7 +321,7 @@ fig, ax = plt.subplots(figsize=(3.4, 2.9))
 
 # Nube de N=50
 ax.scatter(df['IC_fis'], df['IC_ment'],
-           alpha=0.30, s=18, color=GRAY, zorder=2, label=f'Perfiles sintéticos ($N={N}$)')
+           alpha=0.30, s=18, color=GRAY, zorder=2, label=f'Synthetic Profiles ($N={N}$)')
 
 # Arquetipos
 markers = ['o','s','^','D','*']
@@ -342,9 +342,9 @@ ax.axhline(0.35, color=C2, linewidth=0.6, linestyle='--', alpha=0.4)
 ax.text(0.62, 0.57, 'R1+R2', fontsize=5.5, color=C1, alpha=0.7)
 ax.text(0.02, 0.02, 'R4+R5', fontsize=5.5, color=C2, alpha=0.7)
 
-ax.set_xlabel('$IC_{fís}$'); ax.set_ylabel('$IC_{ment}$')
+ax.set_xlabel('$IC_{physical}$'); ax.set_ylabel('$IC_{mental}$')
 ax.set_xlim(0, 1); ax.set_ylim(0, 1)
-ax.set_title('Distribución de perfiles y arquetipos\nen espacio $IC_{fís}$ × $IC_{ment}$',
+ax.set_title('Distribution of profiles and archetypes\nin space $IC_{physical}$ and $IC_{mental}$',
              fontsize=8.5)
 ax.legend(frameon=False, fontsize=6, loc='upper left',
           ncol=1, markerscale=0.9)
