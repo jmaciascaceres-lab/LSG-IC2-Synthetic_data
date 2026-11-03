@@ -14,7 +14,7 @@ RNG = np.random.default_rng(seed=2026)
 # Configuración visual (IEEE-compatible, sin colores vivos)
 plt.rcParams.update({
     'font.family': 'serif',
-    'font.serif': ['Times New Roman'],
+    'font.serif': ['Times New Roman', 'Liberation Serif', 'Nimbus Roman', 'DejaVu Serif'],
     'font.size': 9,
     'axes.titlesize': 9,
     'axes.labelsize': 8,
@@ -46,9 +46,13 @@ def f2_log(x, xmax):
     x = np.clip(x, 0, None)
     return np.clip(np.log(x + 1) / np.log(xmax + 1), 0, 1)
 
-def f3_sigmoidal(x, theta, alpha=0.15):
-    """F3: Umbral binario con suavizado sigmoidal."""
-    return np.clip(1 / (1 + np.exp(alpha * (x - theta))), 0, 1)
+def f3_sigmoidal(x, theta, alpha=0.15, direction=+1):
+    """F3: Umbral binario con suavizado sigmoidal.
+
+    direction (d_k) = +1 si "más es mejor" (p. ej., MVPA): valores sobre theta -> 1.
+    direction (d_k) = -1 si "menos es mejor": valores sobre theta -> 0.
+    """
+    return np.clip(1 / (1 + np.exp(-direction * alpha * (x - theta))), 0, 1)
 
 def f4_ordinal(x):
     """F4: Clasificación ordinal escalada."""
@@ -61,7 +65,7 @@ def normalizar_indicadores(df):
     d = df.copy()
     # Icf: condición física
     d['n_pasos']  = f2_log(d['pasos_dia'], xmax=12000)
-    d['n_mvpa']   = f3_sigmoidal(d['mvpa_min_sem'], theta=150, alpha=0.04)
+    d['n_mvpa']   = f3_sigmoidal(d['mvpa_min_sem'], theta=150, alpha=0.04, direction=+1)  # OMS: 150 min/sem, más es mejor
     d['Icf']      = (d['n_pasos'] + d['n_mvpa']) / 2
 
     # Isfg: salud física general
@@ -84,8 +88,11 @@ def normalizar_indicadores(df):
     d['IC_ment'] = np.sqrt(d['Ipma'] * d['Itd'])
     d['IC_LSG']  = np.sqrt(d['IC_fis'] * d['IC_ment'])
 
-    # Índice de autorregulación (w1=0.6, w2=0.4, Tmax=90 min)
-    d['I_AR'] = 0.6 * d['IC_LSG'] + 0.4 * (1 - np.clip(d['t_juego_min'] / 90, 0, 1))
+    # Índice de autorregulación: media geométrica ponderada (w1 = w2 = 0.5, Tmax = 90 min)
+    # tau_j = max(0, 1 - Tj/Tmax); I_AR = IC_LSG^w1 * tau_j^w2 (no compensatorio)
+    W1, W2, TMAX = 0.5, 0.5, 90
+    tau = np.clip(1 - d['t_juego_min'] / TMAX, 0, 1)
+    d['I_AR'] = d['IC_LSG'] ** W1 * tau ** W2
 
     return d
 
@@ -219,7 +226,7 @@ for ax, col, lbl, col_c in zip(axes, cols, labels, colors):
     ax.legend(frameon=False, fontsize=6.5)
     ax.set_title(lbl, pad=3)
 
-fig.suptitle(f'Distribution of IC₂_LSG indices ($N={N}$ synthetic profiles)',
+fig.suptitle(f'Distribution of $IC_{{LSG}}$ indices ($N={N}$ synthetic profiles)',
              fontsize=9, y=1.02)
 fig.tight_layout()
 fig.savefig('figures/fig_distribucion.pdf',
